@@ -37,10 +37,10 @@ int main()
     const bool contig = true;
     const double unbalance_factor = 1.5;
 
-    std::vector<int> part_default = Partition(sparse, num_parts);
-    std::vector<int> part_fancy = Partition(sparse, num_parts, unbalance_factor, contig);
-    std::vector<int> part_weighted = Partition(sparse, num_parts, unbalance_factor, contig, true);
+    linalgcpp::Vector<int> part_default = Partition(sparse, num_parts);
+    //std::vector<int> part_fancy = Partition(sparse, num_parts, unbalance_factor, contig);
+    //std::vector<int> part_weighted = Partition(sparse, num_parts, unbalance_factor, contig, true);
 
-    //std::cout << "Partition: " << part_default;
+    std::cout << "Partition: " << part_default.data();
     //std::cout << "Partition: " << part_fancy;
 }

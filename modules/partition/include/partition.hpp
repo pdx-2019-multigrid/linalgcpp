@@ -5,53 +5,59 @@
 
 #include "metis.h"
 #include "linalgcpp.hpp"
+#include <vector>
 
 namespace linalgcpp
 {
 
-/** @brief Wrapper to call Metis Partitioning
-    @param mat graph to partition
-    @param num_parts number of partitions to generate
-    @param unbalance_factor allows some unbalance in partition sizes,
-           where 1.0 is little unbalance and 2.0 is lots of unbalance
-    @param contig generate only contiguous partitions where the partitioned subgraphs are always connected,
-            requires the input graph be connected
-    @param weighted use the input graph values as edge weights.
-    @warning  Metis requires positive integer edge weights, so the absolute value is taken and converted to integer.
-           Scale the input appropriately to obtain desired weights
-    @retval partition vector with values representing the partition of the index
- */
-std::vector<int> Partition(const linalgcpp::SparseMatrix<T> adjacency, int num_parts)
+template<typename T>
+linalgcpp::Vector<int> Partition(const linalgcpp::SparseMatrix<T> adjacency, int num_parts)
 {
     //TODO: Error Checking
     // - adjacency should be square
     // - num_parts should be 1 or greater
-    int nodes = adjacency.Cols();
+    
     int error, objval;
     int ncon = 1;
-    vector<int> partitions(nodes);
+    int options[METIS_NOPTIONS] = { };
+    METIS_SetDefaultOptions(options);
+    
+    options[METIS_OPTION_NUMBERING] = 0;
+    
+    int nodes = adjacency.Cols();
+    std::vector<int> partitions_data(nodes);
+    
+    std::vector<int> indptr(adjacency.GetIndptr());
+    std::vector<int> col_indices(adjacency.GetIndices());
 
     error = METIS_PartGraphKway(&nodes,
                                 &ncon,
-                                adjacency.GetIndptr().data(),
-                                adjacency.GetIndices().data(),
+                                indptr.data(),
+                                col_indices.data(),
                                 NULL,
                                 NULL,
                                 NULL,
-                                num_parts,
+                                &num_parts,
                                 NULL,
                                 NULL,
                                 NULL,
                                 &objval,
-                                partitions.data();
+                                partitions_data.data()
                                 );
+    
+    linalgcpp::Vector<int> partitions(partitions_data);
     return partitions;
 }
 
-linalgcpp::SparseMatrix<double> GetInterpolationMatrix(std::vector<int> partitions)
+/* Right now this is assuming that there are no empty partitions / skipped integers
+ *
+ *
+linalgcpp::SparseMatrix<double> GetInterpolationMatrix(linalgcpp::Vector<int> partitions)
 {
+    
     SparseMatrix<double> 
 }
+*/
 
 } // namespace linalgcpp
 
