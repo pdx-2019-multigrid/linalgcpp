@@ -19,9 +19,9 @@ linalgcpp::Vector<int> Partition(const linalgcpp::SparseMatrix<T> adjacency, int
     
     int error, objval;
     int ncon = 1;
+    
     int options[METIS_NOPTIONS] = { };
     METIS_SetDefaultOptions(options);
-    
     options[METIS_OPTION_NUMBERING] = 0;
     
     int nodes = adjacency.Cols();
@@ -29,7 +29,7 @@ linalgcpp::Vector<int> Partition(const linalgcpp::SparseMatrix<T> adjacency, int
     
     std::vector<int> indptr(adjacency.GetIndptr());
     std::vector<int> col_indices(adjacency.GetIndices());
-
+    
     error = METIS_PartGraphKway(&nodes,
                                 &ncon,
                                 indptr.data(),
@@ -51,13 +51,27 @@ linalgcpp::Vector<int> Partition(const linalgcpp::SparseMatrix<T> adjacency, int
 
 /* Right now this is assuming that there are no empty partitions / skipped integers
  *
- *
-linalgcpp::SparseMatrix<double> GetInterpolationMatrix(linalgcpp::Vector<int> partitions)
+ */
+linalgcpp::SparseMatrix<double> GetWeightedInterpolator(const linalgcpp::Vector<int> partitions)
 {
+    int rows = partitions.size();
+    int cols = linalgcpp::Max(partitions) + 1;
+
+    std::vector<int> indptr(rows + 1);
+    std::vector<double> data(rows);
     
-    SparseMatrix<double> 
+    std::vector<int> counts(cols, 0);
+    for(int partition : partitions) ++counts[partition];
+    for(size_t node = 0; node < rows; ++node)
+    {
+        data[node] = 1/counts[partitions[node]];
+        indptr[node] = node;
+    }
+    indptr[rows] = rows;
+    
+    SparseMatrix<double> interpolation_matrix(indptr, partitions.data(), data, rows, cols);
+    return interpolation_matrix;
 }
-*/
 
 } // namespace linalgcpp
 
