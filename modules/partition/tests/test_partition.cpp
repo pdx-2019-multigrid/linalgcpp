@@ -48,7 +48,8 @@ int main()
     SparseMatrix<double> weighted_interpolator = GetWeightedInterpolator(parts);
     std::cout << "Weighted Interpolation Matrix" << std::endl;
     weighted_interpolator.Print();
-
-    //std::cout << "Partition: " << parts.data();
-    //std::cout << "Partition: " << part_fancy;
+    
+    SparseMatrix<int> unweighted_interpolator = GetUnweightedInterpolator(parts);
+    std::cout << "Interpolation Matrix" << std::endl;
+    unweighted_interpolator.PrintDense();
 }

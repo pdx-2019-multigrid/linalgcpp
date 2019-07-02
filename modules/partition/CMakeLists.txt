@@ -25,6 +25,7 @@
 ###############################################################
 # Using https://github.com/pabloariasal/modern-cmake-sample
 # Modified by gelever on April 1st, 2018 #
+# Modified by grafftheory on June 1st, 2019 #
 ###############################################################
 
 cmake_minimum_required(VERSION 3.5)
@@ -98,3 +99,4 @@ export(EXPORT partition-targets
 export(PACKAGE partition)
 
 add_subdirectory(tests)
+add_subdirectory(examples)
