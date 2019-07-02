@@ -37,10 +37,18 @@ int main()
     const bool contig = true;
     const double unbalance_factor = 1.5;
 
-    linalgcpp::Vector<int> part_default = Partition(sparse, num_parts);
+    linalgcpp::Vector<int> parts = Partition(sparse, num_parts);
     //std::vector<int> part_fancy = Partition(sparse, num_parts, unbalance_factor, contig);
     //std::vector<int> part_weighted = Partition(sparse, num_parts, unbalance_factor, contig, true);
+    
+    std::cout << "Partition Vector: ";
+    for (int part: parts.data()) std::cout << part << ' ';
+    std::cout << std::endl;
+    
+    SparseMatrix<double> weighted_interpolator = GetWeightedInterpolator(parts);
+    std::cout << "Weighted Interpolation Matrix" << std::endl;
+    weighted_interpolator.Print();
 
-    std::cout << "Partition: " << part_default.data();
+    //std::cout << "Partition: " << parts.data();
     //std::cout << "Partition: " << part_fancy;
 }
