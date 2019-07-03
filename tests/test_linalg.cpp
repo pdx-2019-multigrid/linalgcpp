@@ -194,6 +194,7 @@ Vector<double> PCG(const DenseMatrix& A, const Vector<double>& b, Vector<double>
 	
 }
 
+
 Vector<double> PCG(const SparseMatrix<double>& A, const Vector<double>& b, Vector<double>(*Msolver)(const SparseMatrix<double>& , Vector<double>),int max_iter,double tol){
 	//level of difficulty: medium				    
 	//assert A is s.p.d.
@@ -345,7 +346,7 @@ int main(int argc, char** argv)
 	
 	std::cout<<"=======solving by gauss-seidel PCG (Sparse)======="<<std::endl;
 	SparseMatrix<double> MS = M.ToSparse();
-	PCG(MS,v,*Solve_Gauss_Seidel,1000,1e-9);//.Print("sol:");
+	PCG(MS,v,Solve_Gauss_Seidel,1000,1e-9);//.Print("sol:");
 	
 	
 	/**
