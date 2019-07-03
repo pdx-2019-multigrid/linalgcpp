@@ -98,5 +98,8 @@ export(EXPORT partition-targets
 
 export(PACKAGE partition)
 
+add_executable(partitioner src/partitioner.cpp)
+target_link_libraries(partitioner partition)
+
 add_subdirectory(tests)
 add_subdirectory(examples)
