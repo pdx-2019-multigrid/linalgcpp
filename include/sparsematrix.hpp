@@ -1099,12 +1099,12 @@ SparseMatrix<V> SparseMatrix<T>::Mult(const SparseMatrix<U>& rhs) const
 
 template <typename T>
 template <typename U, typename V>
-SparseMatrix<V> SparseMatrix<T>::Mult(const SparseMatrix<U>& rhs, std::vector<int>& marker) const
+SparseMatrix<V> SparseMatrix<T>::Mult(const SparseMatrix<U>& rhs, std::vector<int>& col_marker) const
 {
     assert(rhs.Rows() == cols_);
 
-    marker.resize(rhs.Cols());
-    std::fill(begin(marker), end(marker), -1);
+    col_marker.resize(rhs.Cols());
+    std::fill(begin(col_marker), end(col_marker), -1);
 
     std::vector<int> out_indptr(rows_ + 1);
     out_indptr[0] = 0;
@@ -1115,49 +1115,68 @@ SparseMatrix<V> SparseMatrix<T>::Mult(const SparseMatrix<U>& rhs, std::vector<in
     const std::vector<int>& rhs_indices = rhs.GetIndices();
     const std::vector<U>& rhs_data = rhs.GetData();
 
-    for (int i = 0; i < rows_; ++i)
+    int rhs_row, rhs_col, lhs_row, lhs_col, out_row, out_col;
+
+    for (out_row = 0; out_row < rows_; ++out_row)
     {
-        for (int j = indptr_[i]; j < indptr_[i + 1]; ++j)
+        lhs_row = out_row;
+        for (int lhs_ptr = indptr_[lhs_row]; lhs_ptr < indptr_[lhs_row + 1]; ++lhs_ptr)
         {
-            for (int k = rhs_indptr[indices_[j]]; k < rhs_indptr[indices_[j] + 1]; ++k)
+            lhs_col = indices_[lhs_ptr];
+            rhs_row = lhs_col;
+            for (int rhs_ptr = rhs_indptr[rhs_row]; rhs_ptr < rhs_indptr[rhs_row + 1]; ++rhs_ptr)
             {
-                if (marker[rhs_indices[k]] != static_cast<int>(i))
+                rhs_col = rhs_indices[rhs_ptr];
+                out_col = rhs_col;
+
+                // For each output column, col_marker stores the most recent output row 
+                // that the algorithm found a nonzero entry for.
+                if (col_marker[out_col] != static_cast<int>(out_row))
                 {
-                    marker[rhs_indices[k]] = i;
+                    col_marker[out_col] = out_row;
                     ++out_nnz;
                 }
             }
         }
 
-        out_indptr[i + 1] = out_nnz;
+        out_indptr[out_row + 1] = out_nnz;
     }
-
-    std::fill(begin(marker), end(marker), -1);
 
     std::vector<int> out_indices(out_nnz);
     std::vector<V> out_data(out_nnz);
 
-    int total = 0;
+    std::fill(begin(col_marker), end(col_marker), -1);
+    int next_empty_index = 0;
 
-    for (int i = 0; i < rows_; ++i)
+    for (int out_row = 0; out_row < rows_; ++out_row)
     {
-        int row_nnz = total;
+        int row_start_index = next_empty_index;
 
-        for (int j = indptr_[i]; j < indptr_[i + 1]; ++j)
+        lhs_row = out_row;
+        for (int lhs_ptr = indptr_[lhs_row]; lhs_ptr < indptr_[lhs_row + 1]; ++lhs_ptr)
         {
-            for (int k = rhs_indptr[indices_[j]]; k < rhs_indptr[indices_[j] + 1]; ++k)
+            lhs_col = indices_[lhs_ptr];
+            rhs_row = lhs_col;
+            for (int rhs_ptr = rhs_indptr[rhs_row]; rhs_ptr < rhs_indptr[rhs_row + 1]; ++rhs_ptr)
             {
-                if (marker[rhs_indices[k]] < row_nnz)
-                {
-                    marker[rhs_indices[k]] = total;
-                    out_indices[total] = rhs_indices[k];
-                    out_data[total] = data_[j] * rhs_data[k];
+                rhs_col = rhs_indices[rhs_ptr];
+                out_col = rhs_col;
 
-                    total++;
+                // col_marker stores the index of each column's most recent entry in the
+                // output's data & indices arrays.
+                if (col_marker[out_col] < row_start_index)
+                {
+                    int out_ptr = next_empty_index;
+                    col_marker[out_col] = out_ptr;
+                    out_indices[out_ptr] = out_col;
+                    out_data[out_ptr] = data_[lhs_ptr] * rhs_data[rhs_ptr];
+
+                    next_empty_index++;
                 }
                 else
                 {
-                    out_data[marker[rhs_indices[k]]] += data_[j] * rhs_data[k];
+                    int out_ptr = col_marker[out_col];
+                    out_data[out_ptr] += data_[lhs_ptr] * rhs_data[rhs_ptr];
                 }
             }
         }
