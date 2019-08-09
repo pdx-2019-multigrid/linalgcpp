@@ -8,3 +8,4 @@ function(copy_file filename)
 endfunction(copy_file)
 
 copy_file(amazon_m_0.edges)
+copy_file(simple_graph_1.edges)
