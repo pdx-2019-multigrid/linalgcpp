@@ -346,9 +346,9 @@ int main()
 	
 	
 	
-	test_paraMult();
-	test_paraCG(RLap);
-	test_paraTL(RLap);
+	//test_paraMult();
+	//test_paraCG(RLap);
+	//test_paraTL(RLap);
 	//test_lubys();
 	
 	std::cout<<"=======solving by jacobian PCG======="<<std::endl;
