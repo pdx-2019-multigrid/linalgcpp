@@ -58,7 +58,7 @@ Vector<double> PCG_TL(const SparseMatrix<double>& A, const Vector<double>& b,int
 	
     int n = A.Cols();
 	
-    Vector<double> x(n,0.0);
+    Vector<double> x(n,0.0);3
     Vector<double> r(b);
 	Vector<double> pr = Solve_TL(A,Ac,P,*LUsolver,*DLsolver,*DUsolver,r,para);
     Vector<double> p(pr);
@@ -296,6 +296,29 @@ void test_paraTL(const SparseMatrix<double>& RLap){
 	
 }
 
+void test_dense(){
+	
+	DenseMatrix A = RandSPD(100,10);
+	Vector<double> b=RandVect(100,300);
+	
+	std::cout << std::setw(7) << "trial#" << std::setw(15) << "para" << std::setw(15) << "no para" << std::endl << std::endl;
+    double ini_time;
+	double end_time;
+	for(int i=1;i<=4;i++){
+		ini_time = omp_get_wtime();
+		ParaMult(A,b);
+		end_time = omp_get_wtime();
+		std::cout << std::setw(7) << i << std::setw(15) << end_time-ini_time;
+		
+		ini_time = omp_get_wtime();
+		Mult(A,b);
+		end_time = omp_get_wtime();
+		std::cout << std::setw(15) << end_time-ini_time << std::endl;
+    
+	}
+	
+}
+
 int main()
 {
     //SparseMatrix<double> fine_adjacency = ReadMTXList("data/simple_graph_1.edges");
@@ -320,64 +343,18 @@ int main()
     coarse_mat.PrintDense();
 	*/
 	
-	/**
-	DenseMatrix A = RandSPD(100,10);
-	Vector<double> b=RandVect(100,300);
-	
-	
-	std::cout << std::setw(7) << "trial#" << std::setw(15) << "para" << std::setw(15) << "no para" << std::endl << std::endl;
-    double ini_time;
-	double end_time;
-	for(int i=1;i<=4;i++){
-		ini_time = omp_get_wtime();
-		ParaMult(A,b);
-		end_time = omp_get_wtime();
-		std::cout << std::setw(7) << i << std::setw(15) << end_time-ini_time;
-		
-		ini_time = omp_get_wtime();
-		Mult(A,b);
-		end_time = omp_get_wtime();
-		std::cout << std::setw(15) << end_time-ini_time << std::endl;
-    
-	}
-	*/
-	
-	
-	/**
-	Vector<double> b=RandVect(RLap.Cols(),300);
-	//b.Print("b");
-	//Timer Timer1, Timer2;
-	std::cout<<"=======solving by regular CG======="<<std::endl;
-	std::cout << std::setw(7) << "trial#" << std::setw(15) << "para" << std::setw(15) << "no para" << std::endl << std::endl;
-    std::chrono::high_resolution_clock::time_point ini_time;
-	std::chrono::high_resolution_clock::time_point end_time;
-	std::chrono::duration<double> time_span;
-	for(int i=1;i<=4;i++){
-		ini_time = std::chrono::high_resolution_clock::now();
-		CG(RLap,b,1000,1e-9,true);//.Print("sol:");
-		end_time = std::chrono::high_resolution_clock::now();
-		time_span = end_time-ini_time;
-		std::cout << std::setw(7) << i << std::setw(15) << time_span.count();
-		
-		ini_time = std::chrono::high_resolution_clock::now();
-		CG(RLap,b,1000,1e-9,false);//.Print("sol:");
-		end_time = std::chrono::high_resolution_clock::now();
-		time_span = end_time-ini_time;
-		std::cout << std::setw(15) << time_span.count() << std::endl;
-    
-	}
-	*/
 	
 	
 	
-	//test_paraMult();
+	test_paraMult();
 	test_paraCG(RLap);
+	test_paraTL(RLap);
+	//test_lubys();
 	
-	/**
 	std::cout<<"=======solving by jacobian PCG======="<<std::endl;
     PCG(RLap,b,Solve_Jacobian,1000,1e-9);
     //sol.Print("sol:");
-	
+	/**
 	std::cout<<"=======solving by gauss-seidel PCG======="<<std::endl;
 	PCG(RLap,b,Solve_Gauss_Seidel,1000,1e-9);//.Print("sol:");
 	

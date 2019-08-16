@@ -4,122 +4,71 @@
 
 using namespace linalgcpp;
 
-/**
-Vector<double> paraMult(const SparseMatrix<double>& A, const Vector<double>& b){
-    const int aRows = A.Rows();
-    Vector<double> Ab(aRows);
-    using std::vector;
-    vector<vector<int>> indArr(aRows);
-    vector<vector<double>> datArr(aRows);
-    vector<int> dataSizes(aRows);
-
-    #pragma omp parallel for schedule(static)
-    for(int i = 0; i < aRows; i++){
-        indArr[i] = A.GetIndices(i);
-        datArr[i] = A.GetData(i);
-        dataSizes[i] = datArr[i].size();
-    }
-    #pragma omp parallel for schedule(dynamic,1)
-    for(int j = 0; j < dataSizes[i]; j++){
-		for(int i = 0; i < aRows; i++){
-            Ab[i] += datArr[i][j] * b[indArr[i][j]];
-        }
-    }
-    return Ab;
-}
-
-Vector<double> paraMult(const SparseMatrix<double>& A, const Vector<double>& b){
-	Vector<double> Ab(A.Rows());
-	std::vector<int> indArr[A.Rows()];
-	std::vector<double> datArr[A.Rows()];
-	#pragma omp parallel for schedule(dynamic)
-	for(int i=0;i<A.Rows();i++){
-		indArr[i] = A.GetIndices(i);
-		datArr[i] = A.GetData(i);
-	}
-	
-	#pragma omp parallel for
-	for(int i=0;i<A.Rows();i++){
-		double sum=0.0;
-		for(int j=0;j<datArr[i].size();j++){
-			sum+=datArr[i][j]*b[indArr[i][j]];
-		}
-		Ab[i]=sum;
-	}
-	return Ab;
-}
-
-*/
-
-//==================================SparseMatrix=======================================================
-
-
-Vector<double> paraSVM(const SparseMatrix<double>& A, const Vector<double>& x)
+template <typename T>
+Vector<T> paraSVM(const SparseMatrix<T>& A, const Vector<T>& x)
 {
 
-	std::vector<double> newdata = A.GetData();
+	std::vector<T> newdata = A.GetData();
 	std::vector<int> newindptr = A.GetIndptr();
 	std::vector<int> newindices = A.GetIndices();
 
-	std::vector<double> newx = x.data();
-	std::vector<double> toreturn(newx.size());
+	int M=A.Rows();
+	Vector<T> toreturn(M);
 	
-	int M = A.Rows();
 #pragma omp parallel for num_threads(2)
 	for(int i=0; i<M; ++i)
 	{
 	
 		double sum = 0;
 		
-	
-		for(int j=newindptr[i]; j<newindptr[i+1]; ++j)
+		int start = newindptr[i];
+		int end = newindptr[i+1];	
+		for(int j=start; j<end; ++j)
 		{
 		
-			sum += newx[newindices[j]]*newdata[j];
+			sum += x[newindices[j]]*newdata[j];
 
 		}
 
 		toreturn[i] = sum;
 	}
 	
-	
-	Vector<double> toreturn2(toreturn);
-	return toreturn2;
+	return toreturn;
 }
 
-
-Vector<double> SVM(const SparseMatrix<double>& A, const Vector<double>& x)
+template <typename T>
+Vector<T> SVM(const SparseMatrix<T>& A, const Vector<T>& x)
 {
 
-	std::vector<double> newdata = A.GetData();
+	std::vector<T> newdata = A.GetData();
 	std::vector<int> newindptr = A.GetIndptr();
 	std::vector<int> newindices = A.GetIndices();
 
-	std::vector<double> newx = x.data();
-	std::vector<double> toreturn(newx.size());
+	int M=A.Rows();
+	Vector<T> toreturn(M);
 	
-	int M = A.Rows();
 
 	for(int i=0; i<M; ++i)
 	{
 	
 		double sum = 0;
 		
-	
-		for(int j=newindptr[i]; j<newindptr[i+1]; ++j)
+		int start = newindptr[i];
+		int end = newindptr[i+1];	
+		for(int j=start; j<end; ++j)
 		{
 		
-			sum += newx[newindices[j]]*newdata[j];
+			sum += x[newindices[j]]*newdata[j];
 
 		}
 
 		toreturn[i] = sum;
 	}
 	
-	
-	Vector<double> toreturn2(toreturn);
-	return toreturn2;
+	return toreturn;
 }
+
+//==================================SparseMatrix-Vector=======================================================
 
 template <typename T>
 Vector<double> paraMult(const SparseMatrix<T>& A, const Vector<double>& b){
@@ -156,7 +105,7 @@ Vector<double> Mult(const SparseMatrix<T>& A, const Vector<double>& b){
 	return Ab;
 }
 
-//==================================DenseMatrix=======================================
+//==================================DenseMatrix-Vector=======================================
 
 Vector<double> ParaMult(const DenseMatrix& A, const Vector<double>& b){
 	int M=A.Rows();
@@ -185,7 +134,7 @@ Vector<double> Mult(const DenseMatrix& A, const Vector<double>& b){
 	return Ab;
 }
 
-//===============Maxtrix-matrix=====================
+//===============SparseMaxtrix-Matrix=====================
 
 
 
@@ -367,5 +316,5 @@ SparseMatrix<double> Mult(const SparseMatrix<U>& lhs, const SparseMatrix<V>& rhs
 /**
 TODO:
 A^Tx
-A^doubleB
+A^TB
 */
