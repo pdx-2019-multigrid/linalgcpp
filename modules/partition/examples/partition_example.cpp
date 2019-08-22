@@ -310,8 +310,8 @@ int main()
 	SparseMatrix<double> RLap = getReducedLaplacian(Laplacian);
 	//RLap.PrintDense("reduced Laplacian");
 	
-	//solver_test(RLap);
-	solver_test();
+	solver_test(RLap);
+	//solver_test();
 	
 	
 	

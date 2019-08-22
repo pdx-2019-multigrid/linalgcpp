@@ -10,9 +10,9 @@
 
 using namespace linalgcpp;
 
-
+inline
 Vector<double> entrywise_mult(const Vector<double>& a, const Vector<double>& b){
-	assert (a.size()==b.size());
+	//assert (a.size()==b.size());
 	
 	Vector<double> c(a.size());
 	for(int k=0;k<a.size();++k){
@@ -82,6 +82,8 @@ Vector<double> DUsolver(const SparseMatrix<double>& MT, Vector<double> b){
 	return b;
 }
 
+//used by both jacobi and gauss-seidel
+Vector<double> diag;
 
 /*! @brief Solve system Mx=r, where M is the symmetric Gauss-Seidel matrix of A, in O(# of non-zero entries in A)
 
@@ -95,21 +97,16 @@ Vector<double> Solve_Gauss_Seidel(const SparseMatrix<double>& A, Vector<double> 
 	//step 1: solve the lower triangular system for y: (D+L)y=r
 	r=DLsolver(A,r);
 	//step 2: solve the upper triangular system for x: (D+U)x=Dy
-	r=entrywise_mult(Vector<double>(&A.GetDiag()[0],n),r);
+	r=entrywise_mult(diag,r);
 	return DUsolver(A,r);
 	
 }
 
-Vector<double> diag;
-bool DiagSet = false;
+
 Vector<double> Solve_Jacobian(const SparseMatrix<double>& A, Vector<double> r){
 	//assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
 	
 	int n = A.Cols();
-	if(!DiagSet){
-		diag = Vector<double>(&A.GetDiag()[0],n);
-		DiagSet=true;
-	}
 	for(int i=0;i<n;++i){
 		r[i]/=diag[i];
 	}
@@ -123,6 +120,9 @@ Vector<double> PCG(const SparseMatrix<double>& A, const Vector<double>& b, Vecto
 	
     int n = A.Cols();
 	
+	//set diag for jacobi and gauss-seidel
+	diag = Vector<double>(&A.GetDiag()[0],n);
+	
     Vector<double> x(n,0.0);
     Vector<double> r(b);
 	Vector<double> pr = Msolver(A,r);
@@ -130,7 +130,8 @@ Vector<double> PCG(const SparseMatrix<double>& A, const Vector<double>& b, Vecto
     Vector<double> g(n);
     double delta0 = r.Mult(pr);
     double delta = delta0, deltaOld, tau, alpha;
-
+	
+	
     for(int k=0;k<max_iter;k++){
         g = A.Mult(p);
         tau = p.Mult(g);
