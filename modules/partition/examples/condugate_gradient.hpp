@@ -32,7 +32,7 @@ Vector<double> entrywise_inv(const Vector<double>& a){
 
 //M=D+L, the lower triangular system (forward Gauss-Seidel)
 Vector<double> DLsolver(const SparseMatrix<double>& M, Vector<double> b){
-	assert(M.Rows()==M.Cols()&&M.Rows()==b.size());
+	//assert(M.Rows()==M.Cols()&&M.Rows()==b.size());
 	
 	for(int i=0;i<M.Rows();++i){
 		std::vector<int> indices = M.GetIndices(i);
@@ -53,9 +53,32 @@ Vector<double> DLsolver(const SparseMatrix<double>& M, Vector<double> b){
 	return b;
 }
 
+Vector<double> fastDLsolver(const SparseMatrix<double>& M, Vector<double> b){
+	//assert(M.Rows()==M.Cols()&&M.Rows()==b.size());
+	const std::vector<int>& indptr=M.GetIndptr();
+	const std::vector<int>& indices=M.GetIndices();
+	const std::vector<double>& data=M.GetData();
+
+	for(int i=0;i<M.Rows();++i){
+		double sum=0.0;
+		double pivot;
+		for(int j=indptr[i];j<indptr[i+1];++j){
+			if(indices[j]<i){
+				sum+=b[indices[j]]*data[j];
+			}
+			if(indices[j]==i){
+				pivot=data[j];
+			}
+		}
+		b[i]-=sum;
+		b[i]/=pivot;
+	}
+	return b;
+}
+
 //solve the upper triangular system (backward Gauss-Seidel)
 Vector<double> DUsolver(const SparseMatrix<double>& MT, Vector<double> b){
-	assert(MT.Rows()==MT.Cols()&&MT.Rows()==b.size());
+	//assert(MT.Rows()==MT.Cols()&&MT.Rows()==b.size());
 	
 	for(int i=MT.Rows()-1;i>=0;--i){
 		std::vector<int> indices = MT.GetIndices(i);
@@ -150,7 +173,7 @@ Vector<double> PCG(const SparseMatrix<double>& A, const Vector<double>& b, Vecto
     @param max_iter maximum number of iteration before exit
 	@param tol epsilon
 */
-Vector<double> CG(const SparseMatrix<double>& A, const Vector<double>& b, int max_iter,double tol, bool para){
+Vector<double> CG(const SparseMatrix<double>& A, const Vector<double>& b, int max_iter,double tol){
     //assert A is s.p.d.
     int n = A.Cols();
     Vector<double> x(n,0.0);
@@ -161,11 +184,7 @@ Vector<double> CG(const SparseMatrix<double>& A, const Vector<double>& b, int ma
     double delta = delta0, deltaOld, tau, alpha;
 
     for(int k=0;k<max_iter;k++){
-		if(para)
-			g = paraMult(A,p);
-		else
-			g = Mult(A,p);
-		
+		g = A.Mult(p);
         tau = p.Mult(g);
         alpha = delta / tau;
         x = x + (alpha * p);
@@ -174,7 +193,6 @@ Vector<double> CG(const SparseMatrix<double>& A, const Vector<double>& b, int ma
         deltaOld = delta;
 		delta = r.Mult(r);
 		//std::cout<<"delta at iteration "<<k<<" is "<<delta<<std::endl;
-    
         if(delta < tol * tol * delta0){
             //std::cout<<"converge at iteration "<<k<<std::endl;
             return x;
