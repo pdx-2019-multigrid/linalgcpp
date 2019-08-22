@@ -90,6 +90,7 @@ Vector<double> diag;
     @param A the sparse maxtrix from which we generate M
     @param r the right-hand-side of the system
 */
+inline
 Vector<double> Solve_Gauss_Seidel(const SparseMatrix<double>& A, Vector<double> r){
 	//assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
 	
@@ -102,7 +103,7 @@ Vector<double> Solve_Gauss_Seidel(const SparseMatrix<double>& A, Vector<double> 
 	
 }
 
-
+inline
 Vector<double> Solve_Jacobian(const SparseMatrix<double>& A, Vector<double> r){
 	//assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
 	
@@ -120,10 +121,10 @@ Vector<double> PCG(const SparseMatrix<double>& A, const Vector<double>& b, Vecto
 	
     int n = A.Cols();
 	
-	//set diag for jacobi and gauss-seidel
+	//set diag for quick access from jacobi and gauss-seidel
 	diag = Vector<double>(&A.GetDiag()[0],n);
-	
-    Vector<double> x(n,0.0);
+    
+	Vector<double> x(n,0.0);
     Vector<double> r(b);
 	Vector<double> pr = Msolver(A,r);
     Vector<double> p(pr);

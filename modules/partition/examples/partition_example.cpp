@@ -11,7 +11,7 @@
 using namespace linalgcpp;
 
 
-
+inline
 Vector<double> Solve_TL(const SparseMatrix<double>& A,
 						const DenseMatrix& Ac, 
 						const SparseMatrix<int>& P, 
@@ -194,7 +194,7 @@ void test_lubys(){
 
 void solver_test(){
 	//get matrix 
-	SparseMatrix<double> R = ReadCooList("data/matlabData/mat9.txt");
+	SparseMatrix<double> R = ReadCooList("data/matlabData/mat8.txt");
 	int n = R.Cols();
 	std::cout<<n<<std::endl;
 	std::vector<int> row(n-1);
@@ -210,7 +210,7 @@ void solver_test(){
 	
 	//save right-hand-side
 	std::ofstream data;
-	data.open("b9.txt",std::ios_base::app);
+	data.open("b8.txt",std::ios_base::app);
 	for(int i=0;i<n-1;i++)
 		data << b[i] <<"\n";
 	data.close();
@@ -304,11 +304,12 @@ int main()
 {
     //SparseMatrix<double> fine_adjacency = ReadMTXList("data/simple_graph_1.edges");
 	
-	SparseMatrix<double> Laplacian = getLaplacian("data/sc-nasasrb.mtx",1,false);
+	SparseMatrix<double> Laplacian = getLaplacian("data/sc-ldoor.mtx",1,false);
     //Laplacian.PrintDense("LAP");
 	//std::cout<<"read"<<std::endl;
 	SparseMatrix<double> RLap = getReducedLaplacian(Laplacian);
 	//RLap.PrintDense("reduced Laplacian");
+	
 	
 	solver_test(RLap);
 	//solver_test();
