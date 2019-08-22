@@ -67,6 +67,7 @@ Vector<double> PCG_TL(const SparseMatrix<double>& A, const Vector<double>& b,int
 		//std::cout<<"delta at iteration "<<k<<" is "<<delta<<std::endl;
         if(delta < tol * tol * delta0){
             //std::cout<<"converge at iteration "<<k<<std::endl;
+			std::cout << std::setw(15) << k;
             return x;
         }
         p = pr + ((delta / deltaOld)* p);
@@ -159,7 +160,8 @@ Vector<double> PCG_ML(const SparseMatrix<double>& A0, const Vector<double>& b,in
 		delta = r.Mult(pr);
 		//std::cout<<"delta at iteration "<<k<<" is "<<delta<<std::endl;
         if(delta < tol * tol * delta0){
-            std::cout<<"converge at iteration "<<k<<std::endl;
+            //std::cout<<"converge at iteration "<<k<<std::endl;
+			std::cout << std::setw(15) << k;
             return x;
         }
         p = pr + ((delta / deltaOld)* p);
@@ -194,6 +196,7 @@ void solver_test(){
 	//get matrix 
 	SparseMatrix<double> R = ReadCooList("data/matlabData/mat9.txt");
 	int n = R.Cols();
+	std::cout<<n<<std::endl;
 	std::vector<int> row(n-1);
 	for(int i=0;i<n-1;i++){
 		row[i]=i+1;
@@ -248,35 +251,69 @@ void solver_test(){
 	
 }
 
+void solver_test(const SparseMatrix<double>& R){
+	//get matrix 
+	std::cout << "hello?"<< std::endl;
+	int n = R.Cols();
+	
+	//R.PrintDense();
+	
+	//generate right-hand-side
+	Vector<double> b=RandVect(R.Cols(),10000);
+	
+	//save right-hand-side
+	
+	
+	double ini_time;
+	double end_time;
+	std::cout << std::setw(7) << "solver" << std::setw(15) << "iter" << std::setw(15) << "time" << std::endl << std::endl;
+	
+	std::cout << std::setw(7) << "CG"; 
+	ini_time = omp_get_wtime();
+    CG(R,b,10000,1e-9);
+	end_time = omp_get_wtime();
+	std::cout << std::setw(15) << end_time-ini_time << std::endl;
+	
+	std::cout << std::setw(7) << "jacobi"; 
+	ini_time = omp_get_wtime();
+    PCG(R,b,Solve_Jacobian,10000,1e-9);
+	end_time = omp_get_wtime();
+	std::cout << std::setw(15) << end_time-ini_time << std::endl;
+	
+	std::cout << std::setw(7) << "GS"; 
+	ini_time = omp_get_wtime();
+    PCG(R,b,Solve_Gauss_Seidel,10000,1e-9);
+	end_time = omp_get_wtime();
+	std::cout << std::setw(15) << end_time-ini_time << std::endl;
+
+	std::cout << std::setw(7) << "TL"; 
+	ini_time = omp_get_wtime();
+    PCG_TL(R, b,10000,1e-9,std::cbrt(R.Cols()));
+	end_time = omp_get_wtime();
+	std::cout << std::setw(15) << end_time-ini_time << std::endl;
+
+	std::cout << std::setw(7) << "ML"; 
+	ini_time = omp_get_wtime();
+    PCG_ML(R,b,10000,1e-9,100,std::cbrt(R.Cols()));
+	end_time = omp_get_wtime();
+	std::cout << std::setw(15) << end_time-ini_time << std::endl;
+	
+}
+
 int main()
 {
     //SparseMatrix<double> fine_adjacency = ReadMTXList("data/simple_graph_1.edges");
 	
-	SparseMatrix<double> Laplacian = getLaplacian("data/6473.edges",0,false);
+	SparseMatrix<double> Laplacian = getLaplacian("data/sc-nasasrb.mtx",1,false);
     //Laplacian.PrintDense("LAP");
 	//std::cout<<"read"<<std::endl;
 	SparseMatrix<double> RLap = getReducedLaplacian(Laplacian);
 	//RLap.PrintDense("reduced Laplacian");
 	
-	double ini_time;
-	double end_time;
-	Vector<double> b=RandVect(RLap.Cols(),1000);
-	
-	ini_time = omp_get_wtime();
-    DLsolver(RLap,b);
-	end_time = omp_get_wtime();
-	std::cout<<"time "<<end_time-ini_time<<std::endl;
-	
-	ini_time = omp_get_wtime();
-    fastDLsolver(RLap,b);
-	end_time = omp_get_wtime();
-	std::cout<<"time "<<end_time-ini_time<<std::endl;
+	//solver_test(RLap);
+	solver_test();
 	
 	
-	//test_paraMult();
-	//test_paraCG(RLap);
-	//test_paraTL(RLap);
-	//test_lubys();
 	
 	//std::cout<<"=======solving by jacobian PCG======="<<std::endl;
     //PCG(RLap,b,Solve_Jacobian,1000,1e-9);

@@ -34,27 +34,6 @@ Vector<double> entrywise_inv(const Vector<double>& a){
 Vector<double> DLsolver(const SparseMatrix<double>& M, Vector<double> b){
 	//assert(M.Rows()==M.Cols()&&M.Rows()==b.size());
 	
-	for(int i=0;i<M.Rows();++i){
-		std::vector<int> indices = M.GetIndices(i);
-		std::vector<double> data = M.GetData(i);
-		double sum=0;
-		double pivot;
-		for(int j=0;j<indices.size();++j){
-			if(indices[j]<i){
-				sum+=b[indices[j]]*data[j];
-			}
-			if(indices[j]==i){
-				pivot=data[j];
-			}
-		}
-		b[i]-=sum;
-		b[i]/=pivot;
-	}
-	return b;
-}
-
-Vector<double> fastDLsolver(const SparseMatrix<double>& M, Vector<double> b){
-	//assert(M.Rows()==M.Cols()&&M.Rows()==b.size());
 	const std::vector<int>& indptr=M.GetIndptr();
 	const std::vector<int>& indices=M.GetIndices();
 	const std::vector<double>& data=M.GetData();
@@ -76,16 +55,20 @@ Vector<double> fastDLsolver(const SparseMatrix<double>& M, Vector<double> b){
 	return b;
 }
 
+
+
 //solve the upper triangular system (backward Gauss-Seidel)
 Vector<double> DUsolver(const SparseMatrix<double>& MT, Vector<double> b){
 	//assert(MT.Rows()==MT.Cols()&&MT.Rows()==b.size());
 	
-	for(int i=MT.Rows()-1;i>=0;--i){
-		std::vector<int> indices = MT.GetIndices(i);
-		std::vector<double> data = MT.GetData(i);
+	const std::vector<int>& indptr=MT.GetIndptr();
+	const std::vector<int>& indices=MT.GetIndices();
+	const std::vector<double>& data=MT.GetData();
+	
+	for(int i= MT.Rows()-1;i>=0;--i){
 		double sum=0;
 		double pivot;
-		for(int j=0;j<indices.size();++j){
+		for(int j=indptr[i];j<indptr[i+1];++j){
 			if(indices[j]>i){
 				sum+=b[indices[j]]*data[j];
 			}
@@ -106,7 +89,7 @@ Vector<double> DUsolver(const SparseMatrix<double>& MT, Vector<double> b){
     @param r the right-hand-side of the system
 */
 Vector<double> Solve_Gauss_Seidel(const SparseMatrix<double>& A, Vector<double> r){
-	assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
+	//assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
 	
 	int n = A.Cols();
 	//step 1: solve the lower triangular system for y: (D+L)y=r
@@ -117,11 +100,16 @@ Vector<double> Solve_Gauss_Seidel(const SparseMatrix<double>& A, Vector<double> 
 	
 }
 
+Vector<double> diag;
+bool DiagSet = false;
 Vector<double> Solve_Jacobian(const SparseMatrix<double>& A, Vector<double> r){
-	assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
+	//assert(A.Rows()==A.Cols()&&A.Rows()==r.size());
 	
 	int n = A.Cols();
-	Vector<double> diag(&A.GetDiag()[0],n);
+	if(!DiagSet){
+		diag = Vector<double>(&A.GetDiag()[0],n);
+		DiagSet=true;
+	}
 	for(int i=0;i<n;++i){
 		r[i]/=diag[i];
 	}
@@ -155,7 +143,8 @@ Vector<double> PCG(const SparseMatrix<double>& A, const Vector<double>& b, Vecto
 		delta = r.Mult(pr);
 		//std::cout<<"delta at iteration "<<k<<" is "<<delta<<std::endl;
         if(delta < tol * tol * delta0){
-            std::cout<<"converge at iteration "<<k<<std::endl;
+            //std::cout<<"converge at iteration "<<k<<std::endl;
+			std::cout << std::setw(15) << k;
             return x;
         }
         p = pr + ((delta / deltaOld)* p);
@@ -195,6 +184,7 @@ Vector<double> CG(const SparseMatrix<double>& A, const Vector<double>& b, int ma
 		//std::cout<<"delta at iteration "<<k<<" is "<<delta<<std::endl;
         if(delta < tol * tol * delta0){
             //std::cout<<"converge at iteration "<<k<<std::endl;
+			std::cout << std::setw(15) << k;
             return x;
         }
         p = r + ((delta / deltaOld)* p);
